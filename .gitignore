@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+# Virtual environment created by pipenv
+.pipenv/
+# Virtual environment created by poetry
+.venv_poetry/
+# Distribution / packaging
+.Python/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# IDEs and other tools
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*~
+.history/
+.mypy_cache/
+.pytest_cache/
+.coverage.*
+htmlcov/
+.nox/
+.tox/
+
+# Specific to FastAPI/Uvicorn
+.uv/
+.uvicorn/
+
+# Environment variables
+.env
+.flaskenv
+.secrets.toml
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db

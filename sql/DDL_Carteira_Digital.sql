@@ -57,7 +57,7 @@ CREATE TABLE CARTEIRA (
     id INT AUTO_INCREMENT PRIMARY KEY,
     endereco_carteira VARCHAR(255) UNIQUE NOT NULL,
     hash_chave_privada VARCHAR(255) NOT NULL,
-    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    data_criacao DATETIME DEFAULT NOW(),
     status ENUM ('ATIVA' , 'BLOQUEADA') default 'ATIVA' 
 );
 -- ================================

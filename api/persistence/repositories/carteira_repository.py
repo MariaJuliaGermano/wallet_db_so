@@ -106,3 +106,5 @@ class CarteiraRepository:
             ).mappings().first()
 
         return dict(row) if row else None
+    
+    

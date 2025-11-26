@@ -58,7 +58,7 @@ CREATE TABLE MOEDA (
 --   TABELA: SALDO_CARTEIRA
 -- ===========================
 CREATE TABLE SALDO_CARTEIRA (
-    endereco_carteira VARCHAR(255) NOT NULL
+    endereco_carteira VARCHAR(255) NOT NULL,
     id_moeda SMALLINT NOT NULL,
     saldo DECIMAL(18,8) DEFAULT 0,
     data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP,

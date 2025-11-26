@@ -9,14 +9,32 @@ class MovimentacaoService:
     # ========================
 
 
+# ...existing code...
     def obter_saldo(self, endereco):
         saldos = self.repository.listar_saldos(endereco)
         if not saldos:
             return {
-                 "endereco": endereco,
-                 "saldo": 0.0,
-                    "data_atualizacao": datetime.utcnow()
-}
+                "endereco": endereco,
+                "saldo": 0.0,
+                "data_atualizacao": None,
+                "saldos": []
+            }
+
+        primary = saldos[0]
+        return {
+            "endereco": endereco,
+            "saldo": float(primary["saldo"]),
+            "data_atualizacao": primary.get("data_atualizacao"),
+            "saldos": [
+                {
+                    "id_moeda": s["id_moeda"],
+                    "saldo": float(s["saldo"]),
+                    "data_atualizacao": s["data_atualizacao"],
+                }
+                for s in saldos
+            ],
+        }
+
 
 
         return {
@@ -37,24 +55,31 @@ class MovimentacaoService:
     def realizar_deposito(self, endereco, valor):
         id_moeda = 1           # moeda fixa (exemplo)
         taxa = 0.0             # sem taxa
-
+        tipo = "DEPOSITO"
         saldo_atual = self.repository.obter_saldo(endereco, id_moeda)
         novo_saldo = saldo_atual + valor
 
         self.repository.atualizar_saldo(endereco, id_moeda, novo_saldo)
-        id_mov = self.repository.registrar_movimento(
+        id_mov = self.repository.registrar_movimentacao(
             endereco=endereco,
             id_moeda=id_moeda,
-            tipo="DEPOSITO",
+            tipo=tipo,
             valor=valor,
             taxa_valor=taxa
         )
 
+        now = datetime.utcnow()
+
         return {
             "id_movimento": id_mov,
             "endereco": endereco,
+            "endereco_carteira": endereco,
+            "id_moeda": id_moeda,
+            "tipo": tipo,
+            "taxa_valor": taxa,
             "valor": valor,
-            "saldo_final": novo_saldo
+            "saldo_final": novo_saldo,
+            "data_hora": now
         }
 
     # ========================
@@ -67,11 +92,13 @@ class MovimentacaoService:
         saldo_atual = self.repository.obter_saldo(endereco, id_moeda)
         if saldo_atual < valor:
             raise ValueError("Saldo insuficiente.")
+        if  valor<0:
+            raise ValueError("Valor inválido.")
 
         novo_saldo = saldo_atual - valor
 
         self.repository.atualizar_saldo(endereco, id_moeda, novo_saldo)
-        id_mov = self.repository.registrar_movimento(
+        id_mov = self.repository.registrar_movimentacao(
             endereco=endereco,
             id_moeda=id_moeda,
             tipo="SAQUE",
@@ -81,8 +108,12 @@ class MovimentacaoService:
 
         return {
             "id_movimento": id_mov,
-            "endereco": endereco,
+            "endereco_carteira": endereco,
+            "id_moeda": id_moeda,
+            "tipo": "SAQUE",
             "valor": valor,
+            "taxa_valor": taxa,
+            "data_hora": datetime.now(),
             "saldo_final": novo_saldo
         }
 

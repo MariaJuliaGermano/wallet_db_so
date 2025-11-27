@@ -35,17 +35,37 @@ class CarteiraRepository:
                 {"endereco": endereco, "hash_privada": hash_privada},
             )
 
+            conn.execute(
+                text("""
+                    INSERT INTO saldo_carteira (endereco_carteira, id_moeda, saldo, data_atualizacao)
+                    VALUES (:endereco, 1, 0.0, NOW(),)
+                    VALUES (:endereco, 2, 0.0, NOW(),)
+                    VALUES (:endereco, 3, 0.0, NOW(),)
+                    VALUES (:endereco, 4, 0.0, NOW(),)
+                    VALUES (:endereco, 5, 0.0, NOW(),)
+                """),
+                {"endereco": endereco, "id_moeda": 1, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 2, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 3, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 4, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 5, "saldo": 0.0, "data_atualizacao": "NOW()"},
+            )
+
             # 3) SELECT para retornar a carteira criada
             row = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
-                     WHERE endereco_carteira = :endereco
+                        data_criacao,
+                        status,
+                        hash_chave_privada
+                        FROM carteira
+                        WHERE endereco_carteira = :endereco
                 """),
-                {"endereco": endereco},
+                {"endereco": endereco, "id_moeda": 1, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 2, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 3, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 4, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco, "id_moeda": 5, "saldo": 0.0, "data_atualizacao": "NOW()"},
             ).mappings().first()
 
         carteira = dict(row)

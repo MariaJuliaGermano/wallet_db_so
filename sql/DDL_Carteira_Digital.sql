@@ -27,11 +27,6 @@ FLUSH PRIVILEGES;
 -- 4) Usar a base
 USE wallet_homolog;
 
--- =========================================================
---  Tabelas (Aluno deve fazer o modelo)
--- =========================================================
-
-
 -- ================================
 --  TABELA CARTEIRA
 -- ================================
@@ -139,8 +134,4 @@ CREATE TABLE TRANSFERENCIA (
         REFERENCES MOEDA(id_moeda)
 );
 
-
--- ================================
--- TUDO CRIADO COM SUCESSO
--- ================================
 SELECT 'Base wallet_homolog e tabelas criadas com sucesso!' AS mensagem;

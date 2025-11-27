@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from api.routers.conversoes_router import router as conversoes_router
 from api.routers.carteira_router import router as carteiras_router
 from api.routers.movimentacao_router import router as movimentacao_router
 
@@ -12,6 +13,8 @@ def create_app() -> FastAPI:
 
     app.include_router(carteiras_router)
     app.include_router(movimentacao_router)
+    app.include_router(conversoes_router)
+
 
     return app
 

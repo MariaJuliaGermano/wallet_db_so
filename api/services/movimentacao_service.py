@@ -15,9 +15,20 @@ class MovimentacaoService:
         if not saldos:
             return {
                 "endereco": endereco,
-                "saldo": 0.0,
-                "data_atualizacao": None,
-                "saldos": []
+                "saldo": 0.0,  
+                "id_moeda": 1,
+                    "saldo": 0.0,
+                "id_moeda": 2,
+                    "saldo": 0.0,
+                "id_moeda": 3,
+                    "saldo": 0.0,
+                "id_moeda": 4,
+                    "saldo": 0.0,
+                "id_moeda": 5,  
+                    "saldo": 0.0,
+
+                "data_atualizacao": datetime.utcnow(),
+                
             }
 
         primary = saldos[0]

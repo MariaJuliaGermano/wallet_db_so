@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, PositiveFloat
 from datetime import datetime
 from typing import Optional
 
@@ -79,8 +79,12 @@ class SaqueRequest(BaseModel):
 
 
 class ConversaoRequest(BaseModel):
-    endereco_destino: str
-    valor: float
+    moeda_origem: str = Field(..., example="BTC")
+    moeda_destino: str = Field(..., example="USD")
+    valor: PositiveFloat = Field(..., example=0.001)
+
+    chave_privada: str | None = Field(None, description="Chave privada exigida se a regra requer autenticação.")
+
 
 
 class TransferenciaRequest(BaseModel):

@@ -13,7 +13,8 @@ CREATE DATABASE IF NOT EXISTS wallet_homolog
 --    (ajuste a senha conforme necessário)
 
 
-    CREATE USER 'wallet_api_homolog'@'%' IDENTIFIED BY 'api123';
+    DROP USER IF EXISTS 'wallet_api_homolog'@'%';
+	CREATE USER 'wallet_api_homolog'@'%' IDENTIFIED BY 'api123';
     GRANT SELECT, INSERT, UPDATE, DELETE ON wallet_homolog.* TO'wallet_api_homolog'@'%';
     FLUSH PRIVILEGES;
 
@@ -138,6 +139,103 @@ CREATE TABLE TRANSFERENCIA (
     FOREIGN KEY (id_moeda)
         REFERENCES MOEDA(id_moeda)
 );
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_realizar_transferencia(
+    IN p_origem VARCHAR(255),     
+    IN p_destino VARCHAR(255),    
+    IN p_moeda SMALLINT,    
+    IN p_valor DECIMAL(18, 8),   
+    IN p_taxa DECIMAL(18, 8),    
+    IN p_chave_privada VARCHAR(255)
+)
+BEGIN
+    DECLARE v_saldo_origem DECIMAL(18, 8);
+    DECLARE v_hash_armazenado VARCHAR(255);
+    DECLARE v_status_origem VARCHAR(20);
+    DECLARE v_existe_destino INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT 
+        C.hash_chave_privada, 
+        C.status, 
+        S.saldo 
+    INTO 
+        v_hash_armazenado, 
+        v_status_origem, 
+        v_saldo_origem
+    FROM CARTEIRA C
+    LEFT JOIN SALDO_CARTEIRA S 
+        ON C.endereco_carteira = S.endereco_carteira 
+        AND S.id_moeda = p_moeda
+    WHERE C.endereco_carteira = p_origem
+    FOR UPDATE;
+
+    SELECT COUNT(*) INTO v_existe_destino
+    FROM CARTEIRA 
+    WHERE endereco_carteira = p_destino;
+
+    -- ================= VALIDAÇÕES =================
+
+    -- A. Carteira origem existe?
+    IF v_hash_armazenado IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erro: Carteira de origem não existe.';
+
+    -- B. Carteira está bloqueada?
+    ELSEIF v_status_origem = 'BLOQUEADA' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erro: Carteira de origem bloqueada.';
+
+    -- C. Senha confere? (Assumindo comparação direta. Se for hash real, usar SHA2())
+    ELSEIF v_hash_armazenado <> p_chave_privada THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erro: Chave privada incorreta.';
+
+    -- D. Destino existe?
+    ELSEIF v_existe_destino = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erro: Carteira de destino não existe.';
+
+    -- E. Tem saldo na moeda específica?
+    -- (Nota: IFNULL trata caso a pessoa nunca tenha tido saldo naquela moeda, retornando 0)
+    ELSEIF IFNULL(v_saldo_origem, 0) < (p_valor + p_taxa) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Erro: Saldo insuficiente nesta moeda.';
+
+    ELSE
+        -- ================= EXECUÇÃO =================
+
+        -- 1. Debitar da Origem (Atualiza SALDO_CARTEIRA)
+        UPDATE SALDO_CARTEIRA 
+        SET saldo = saldo - (p_valor + p_taxa),
+            data_atualizacao = NOW()
+        WHERE endereco_carteira = p_origem AND id_moeda = p_moeda;
+
+        -- 2. Creditar no Destino (Upsert - Cria ou Atualiza)
+        -- Se o destino não tiver registro dessa moeda, cria. Se tiver, soma.
+        INSERT INTO SALDO_CARTEIRA (endereco_carteira, id_moeda, saldo, data_atualizacao)
+        VALUES (p_destino, p_moeda, p_valor, NOW())
+        ON DUPLICATE KEY UPDATE 
+            saldo = saldo + p_valor,
+            data_atualizacao = NOW();
+
+        -- 3. Gerar Recibo (Tabela TRANSFERENCIA)
+        INSERT INTO TRANSFERENCIA (endereco_origem, endereco_destino, id_moeda, valor, taxa_valor)
+        VALUES (p_origem, p_destino, p_moeda, p_valor, p_taxa);
+
+        COMMIT;
+        SELECT 'Transferência realizada com sucesso!' AS mensagem;
+        
+    END IF;
+
+END $$
+
+DELIMITER ;
+
 
 
 -- ================================

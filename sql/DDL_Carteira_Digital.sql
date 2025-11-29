@@ -49,6 +49,12 @@ CREATE TABLE MOEDA (
     tipo VARCHAR(10) NOT NULL
 );
 
+INSERT INTO moeda (id_moeda, codigo, nome, tipo) VALUES (1, 'BTC', 'Bitcoin', 'crypto');
+INSERT INTO moeda (id_moeda, codigo, nome, tipo) VALUES (2, 'USD', 'US Dollar', 'currency');
+INSERT INTO moeda (id_moeda, codigo, nome, tipo) VALUES (3, 'ETH', 'Etherium', 'crypto');
+INSERT INTO moeda (id_moeda, codigo, nome, tipo) VALUES (4, 'BRL', 'Real brasileiro ', 'currency');
+INSERT INTO moeda (id_moeda, codigo, nome, tipo) VALUES (5, 'SOL', 'Solana ', 'crypto');
+
 -- ===========================
 --   TABELA: SALDO_CARTEIRA
 -- ===========================

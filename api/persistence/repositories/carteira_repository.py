@@ -38,17 +38,10 @@ class CarteiraRepository:
             conn.execute(
                 text("""
                     INSERT INTO saldo_carteira (endereco_carteira, id_moeda, saldo, data_atualizacao)
-                    VALUES (:endereco, 1, 0.0, NOW(),)
-                    VALUES (:endereco, 2, 0.0, NOW(),)
-                    VALUES (:endereco, 3, 0.0, NOW(),)
-                    VALUES (:endereco, 4, 0.0, NOW(),)
-                    VALUES (:endereco, 5, 0.0, NOW(),)
+                    SELECT :endereco, id_moeda, 0.0, NOW()
+                    FROM moeda
                 """),
-                {"endereco": endereco, "id_moeda": 1, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 2, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 3, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 4, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 5, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco},
             )
 
             # 3) SELECT para retornar a carteira criada
@@ -61,11 +54,7 @@ class CarteiraRepository:
                         FROM carteira
                         WHERE endereco_carteira = :endereco
                 """),
-                {"endereco": endereco, "id_moeda": 1, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 2, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 3, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 4, "saldo": 0.0, "data_atualizacao": "NOW()"},
-                {"endereco": endereco, "id_moeda": 5, "saldo": 0.0, "data_atualizacao": "NOW()"},
+                {"endereco": endereco}
             ).mappings().first()
 
         carteira = dict(row)
@@ -77,11 +66,11 @@ class CarteiraRepository:
             row = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
-                     WHERE endereco_carteira = :endereco
+                    data_criacao,
+                    status,
+                    hash_chave_privada
+                    FROM carteira
+                    WHERE endereco_carteira = :endereco
                 """),
                 {"endereco": endereco_carteira},
             ).mappings().first()
@@ -93,10 +82,10 @@ class CarteiraRepository:
             rows = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
+                    data_criacao,
+                    status,
+                    hash_chave_privada
+                    FROM carteira
                 """)
             ).mappings().all()
 
@@ -107,8 +96,8 @@ class CarteiraRepository:
             conn.execute(
                 text("""
                     UPDATE carteira
-                       SET status = :status
-                     WHERE endereco_carteira = :endereco
+                    SET status = :status
+                    WHERE endereco_carteira = :endereco
                 """),
                 {"status": status, "endereco": endereco_carteira},
             )
@@ -116,11 +105,11 @@ class CarteiraRepository:
             row = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
-                     WHERE endereco_carteira = :endereco
+                    data_criacao,
+                    status,
+                    hash_chave_privada
+                    FROM carteira
+                    WHERE endereco_carteira = :endereco
                 """),
                 {"endereco": endereco_carteira},
             ).mappings().first()

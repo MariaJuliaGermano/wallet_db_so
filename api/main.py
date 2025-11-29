@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from api.routers import conversao_router
 from api.routers.conversoes_router import router as conversoes_router
 from api.routers.carteira_router import router as carteira_router
 from api.routers.movimentacao_router import router as movimentacao_router
@@ -16,8 +15,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(carteira_router)
-    app.include_router(movimentacao_router)
-    app.include_router(conversao_router.router)  # ✅ CORRIGIDO
+    app.include_router(movimentacao_router)  
     app.include_router(conversoes_router)
     app.include_router(deposito_saques_router)
     app.include_router(transferencia_router)

@@ -10,8 +10,7 @@ class CarteiraService:
 
     def criar_carteira(self) -> CarteiraCriada:
         row = self.carteira_repo.criar()
-        # row tem: endereco_carteira, data_criacao, status, hash_chave_privada, chave_privada
-        # não expomos o hash
+
         return CarteiraCriada(
             endereco_carteira=row["endereco_carteira"],
             data_criacao=row["data_criacao"],

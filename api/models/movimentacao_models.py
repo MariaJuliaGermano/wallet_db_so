@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, PositiveFloat
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 
 # ---------- SALDO ----------
@@ -14,6 +14,10 @@ class Saldo(BaseModel):
 class MovimentoBase(BaseModel):
     id_moeda: int
     valor: float
+
+class DepositoRequest(BaseModel):
+    valor: float
+    moeda: str
 
 
 class MovimentoCriado(BaseModel):
@@ -71,6 +75,7 @@ from typing import Optional
 # ------------ Requests ------------
 class DepositoRequest(BaseModel):
     valor: float
+    moeda: str
 
 
 class SaqueRequest(BaseModel):
@@ -79,8 +84,9 @@ class SaqueRequest(BaseModel):
 
 
 class ConversaoRequest(BaseModel):
-    endereco_destino: str
-    valor: float
+    moeda_origem: str = Field(..., description="Código da moeda de origem, ex: BTC")
+    moeda_destino: str = Field(..., description="Código da moeda destino, ex: BRL")
+    valor_origem: PositiveFloat = Field(..., description="Valor a debitar na moeda origem (positivo)")
 
 
 class TransferenciaRequest(BaseModel):
@@ -98,11 +104,15 @@ class MovimentacaoResponse(BaseModel):
     valor: float
     data_movimentacao: datetime
 
+class SaldoItem(BaseModel):
+    moeda: str
+    saldo: float
+    data_atualizacao: Optional[str]
 
 class SaldoResponse(BaseModel):
     endereco: str
-    saldo: float
-    data_atualizacao: datetime
+    saldos: List[SaldoItem]
+    data_atualizacao: Optional[str]
 
 class DepositoResponse(BaseModel):
     id_movimento: int
@@ -111,6 +121,7 @@ class DepositoResponse(BaseModel):
     tipo: str
     valor: float
     taxa_valor: float
+    saldo_final: float
     data_hora: datetime
 class SaqueResponse(BaseModel):
     id_movimento: int

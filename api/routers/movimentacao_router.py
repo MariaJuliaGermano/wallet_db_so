@@ -103,9 +103,10 @@ def transferir(
 ):
     try:
         return service.realizar_transferencia(
-            endereco_origem=endereco_origem,
-            endereco_destino=body.endereco_destino,
-            valor=body.valor,
-        )
+           endereco_origem=endereco_origem,
+           endereco_destino=body.endereco_destino,
+           valor=body.valor,
+           chave_privada=body.chave_privada  #modificado
+)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -161,38 +161,48 @@ class MovimentacaoService:
             "valor_convertido": valor_convertido,
         }
 
-    # ========================
-    #      TRANSFERÊNCIA
-    # ========================
-    def realizar_transferencia(self, endereco_origem, endereco_destino, valor):
-        id_moeda = 1
-        taxa = 0.01
-        taxa_valor = valor * taxa
-
-        saldo_origem = self.repository.obter_saldo(endereco_origem, id_moeda)
-        if saldo_origem < valor + taxa_valor:
-            raise ValueError("Saldo insuficiente para transferência.")
-
-        self.repository.atualizar_saldo(
             endereco_origem, id_moeda, saldo_origem - valor - taxa_valor
-        )
+# ========================================
+# TRANSFERÊNCIA (CORRIGIDA)
+# ========================================
+def realizar_transferencia(self, endereco_origem, endereco_destino, valor, chave_privada=None):
 
-        saldo_dest = self.repository.obter_saldo(endereco_destino, id_moeda)
-        self.repository.atualizar_saldo(
-            endereco_destino, id_moeda, saldo_dest + valor
-        )
+    id_moeda = 1                
+    taxa = 0.02                 
+    taxa_valor = valor * taxa
 
-        id_transfer = self.repository.registrar_transferencia(
-            origem=endereco_origem,
-            destino=endereco_destino,
-            id_moeda=id_moeda,
-            valor=valor,
-            taxa_valor=taxa_valor
-        )
+    # ---------------------------
+    # Validações iniciais
+    # ---------------------------
+    if valor <= 0:
+        raise ValueError("Valor da transferência precisa ser positivo.")
 
-        return {
-            "id_transferencia": id_transfer,
-            "origem": endereco_origem,
-            "destino": endereco_destino,
-            "valor": valor
-        }
+    if not endereco_destino:
+        raise ValueError("Endereço de destino não pode ser vazio.")
+
+    if chave_privada is None:
+        raise ValueError("Chave privada é obrigatória para transferência.")
+
+    # ---------------------------
+    # Verificar saldo
+    # ---------------------------
+    saldo_origem = self.repository.obter_saldo(endereco_origem, id_moeda)
+    if saldo_origem < valor + taxa_valor:
+        raise ValueError("Saldo insuficiente para transferência.")
+
+    # ---------------------------
+    # Realizar transferência
+    # ---------------------------
+    transferencia = self.repository.realizar_transferencia(
+        origem=endereco_origem,
+        destino=endereco_destino,
+        id_moeda=id_moeda,
+        valor=valor,
+        taxa_valor=taxa_valor,
+        chave_privada=chave_privada
+    )
+
+    if not transferencia:
+        raise ValueError("Erro ao registrar transferência.")
+
+    return transferencia

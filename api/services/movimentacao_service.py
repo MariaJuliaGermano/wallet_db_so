@@ -160,15 +160,14 @@ class MovimentacaoService:
             "endereco": endereco,
             "valor_convertido": valor_convertido,
         }
-
-            endereco_origem, id_moeda, saldo_origem - valor - taxa_valor
+        endereco_origem, id_moeda, saldo_origem - valor - taxa_valor
 # ========================================
 # TRANSFERÊNCIA (CORRIGIDA)
 # ========================================
 def realizar_transferencia(self, endereco_origem, endereco_destino, valor, chave_privada=None):
 
-    id_moeda = 1                
-    taxa = 0.02                 
+    id_moeda = 1
+    taxa = 0.02
     taxa_valor = valor * taxa
 
     # ---------------------------

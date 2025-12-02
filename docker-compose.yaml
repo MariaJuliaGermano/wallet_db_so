@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: wallet_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: wallet_homolog
+      MYSQL_USER: wallet_api_homolog
+      MYSQL_PASSWORD: api123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/DDL_Carteira_Digital.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: "mysql -h localhost -u root -p$$MYSQL_ROOT_PASSWORD -D wallet_homolog -e 'SELECT 1 FROM carteira LIMIT 1'"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s # Dá um tempo extra para o banco iniciar antes de começar a falhar
+
+  app:
+    build: .
+    container_name: wallet_api
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: wallet_api_homolog
+      DB_PASSWORD: api123
+      DB_NAME: wallet_homolog
+      TAXA_SAQUE_PERCENTUAL: 0.01
+      TAXA_CONVERSAO_PERCENTUAL: 0.02
+      TAXA_TRANSFERENCIA_PERCENTUAL: 0.01
+      PRIVATE_KEY_SIZE: 32
+      PUBLIC_KEY_SIZE: 16
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+volumes:
+  mysql_data:

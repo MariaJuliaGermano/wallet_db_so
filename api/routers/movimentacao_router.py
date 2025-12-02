@@ -74,9 +74,25 @@ def sacar(
     service: MovimentacaoService = Depends(get_mov_service)
 ):
     try:
-        return service.realizar_saque(endereco, body.valor)
+        # --- 1) Converter "BTC" → id_moeda ---
+        if isinstance(body.moeda, str):
+            id_moeda = service.repository.obter_id_moeda(body.moeda.upper())
+            if not id_moeda:
+                raise HTTPException(status_code=400, detail="Moeda inválida.")
+        else:
+            id_moeda = body.moeda
+
+        # --- 2) Chamar o service corretamente ---
+        return service.realizar_saque(
+            endereco=endereco,
+            id_moeda=id_moeda,
+            valor=body.valor,
+            chave_privada=body.chave_privada
+        )
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 
 # ===========================
@@ -115,8 +131,10 @@ def transferir(
         return service.realizar_transferencia(
            endereco_origem=endereco_origem,
            endereco_destino=body.endereco_destino,
+           id_moeda=body.id_moeda,
            valor=body.valor,
-           chave_privada=body.chave_privada  #modificado
+           chave_privada=body.chave_privada  
+           
 )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -1,10 +1,12 @@
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 import os
+from dotenv import load_dotenv
 import requests
 from sqlalchemy import text
 from api.persistence.db import get_connection
 
+load_dotenv()
 class MovimentacaoService:
     def __init__(self, repository):
         self.repository = repository
@@ -80,17 +82,28 @@ class MovimentacaoService:
     # ========================
     #      SAQUE
     # ========================
-    def realizar_saque(self, endereco, valor):
-        id_moeda = 1
-        taxa = 0.0
+    def realizar_saque(self, endereco, id_moeda, valor, chave_privada): #add chave privada e add hash
+
+#         hash_salvo = self.repository.obter_hash_chave_privada(endereco)
+
+#         hash_informado = hashlib.sha256(chave_privada.encode()).hexdigest()
+
+#         if hash_salvo != hash_informado:
+#             raise ValueError("Chave privada inválida.")
+# ########################################################
+
+        taxa_percentual = Decimal(os.getenv("TAXA_SAQUE_PERCENTUAL", "0.01"))
+        taxa_valor = (Decimal(valor) * taxa_percentual).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
 
         saldo_atual = self.repository.obter_saldo(endereco, id_moeda)
-        if saldo_atual < valor:
+
+        if saldo_atual < Decimal(valor) + taxa_valor:
             raise ValueError("Saldo insuficiente.")
         if  valor<0:
             raise ValueError("Valor inválido.")
+        valor_final = valor + float(taxa_valor)
 
-        novo_saldo = saldo_atual - valor
+        novo_saldo = saldo_atual - valor_final
 
         self.repository.atualizar_saldo(endereco, id_moeda, novo_saldo)
         id_mov = self.repository.registrar_movimentacao(
@@ -98,7 +111,7 @@ class MovimentacaoService:
             id_moeda=id_moeda,
             tipo="SAQUE",
             valor=valor,
-            taxa_valor=taxa
+            taxa_valor=taxa_valor
         )
 
         return {
@@ -107,7 +120,7 @@ class MovimentacaoService:
             "id_moeda": id_moeda,
             "tipo": "SAQUE",
             "valor": valor,
-            "taxa_valor": taxa,
+            "taxa_valor": taxa_valor,
             "data_hora": datetime.now(),
             "saldo_final": novo_saldo
         }
@@ -138,7 +151,7 @@ class MovimentacaoService:
         cotacao = Decimal(cotacao_str)
 
         valor_destino = (valor_origem * cotacao).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
-        taxa_percentual = self.taxa_percentual
+        taxa_percentual = Decimal(os.getenv("TAXA_CONVERSAO_PERCENTUAL", "0.02"))
         taxa_valor = (valor_origem * taxa_percentual).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
 
         novo_saldo_origem = (saldo_origem - valor_origem).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
@@ -149,7 +162,7 @@ class MovimentacaoService:
         novo_saldo_destino = (saldo_destino + (valor_origem - taxa_valor) * cotacao).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
 
         with get_connection() as conn:
-            trans = conn.begin()
+            transf = conn.begin()
             try:
                 conn.execute(
                     text("""
@@ -158,14 +171,6 @@ class MovimentacaoService:
                     ON DUPLICATE KEY UPDATE saldo = :saldo, data_atualizacao = NOW()
                     """),
                     {"endereco": endereco, "id_moeda": id_origem, "saldo": float(novo_saldo_origem)}
-                )
-                conn.execute(
-                    text("""
-                    INSERT INTO saldo_carteira (endereco_carteira, id_moeda, saldo, data_atualizacao)
-                    VALUES (:endereco, :id_moeda, :saldo, NOW())
-                    ON DUPLICATE KEY UPDATE saldo = :saldo, data_atualizacao = NOW()
-                    """),
-                    {"endereco": endereco, "id_moeda": id_destino, "saldo": float(novo_saldo_destino)}
                 )
 
                 q = text("""
@@ -189,9 +194,9 @@ class MovimentacaoService:
                 last = conn.execute(text("SELECT LAST_INSERT_ID() AS id_conversao")).fetchone()
                 id_conversao = int(last[0]) if last else None
 
-                trans.commit()
+                transf.commit()
             except Exception:
-                trans.rollback()
+                transf.rollback()
                 raise
 
         return {
@@ -216,14 +221,10 @@ class MovimentacaoService:
         return data["data"]["rates"]
         endereco_origem, id_moeda, saldo_origem - valor - taxa_valor
 # ========================================
-# TRANSFERÊNCIA (CORRIGIDA)
+# TRANSFERÊNCIA 
 # ========================================
-    def realizar_transferencia(self, endereco_origem, endereco_destino, valor, chave_privada=None):
-
-        id_moeda = 1
-        taxa = 0.02
-        taxa_valor = valor * taxa
-
+    def realizar_transferencia(self, endereco_origem, endereco_destino, id_moeda, valor, chave_privada=None):
+        id_moeda = self.repository.obter_id_moeda(id_moeda)
         # ---------------------------
         # Validações iniciais
         # ---------------------------
@@ -239,23 +240,40 @@ class MovimentacaoService:
         # ---------------------------
         # Verificar saldo
         # ---------------------------
+        taxa_percentual = Decimal(os.getenv("TAXA_TRANSFERENCIA_PERCENTUAL", "0.01"))
+        taxa_valor = (Decimal(valor) * taxa_percentual).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
+        valor_final = Decimal(valor) + taxa_valor
         saldo_origem = self.repository.obter_saldo(endereco_origem, id_moeda)
-        if saldo_origem < valor + taxa_valor:
+        saldo_destino = self.repository.obter_saldo(endereco_destino, id_moeda)
+        
+        if saldo_origem < valor_final:
             raise ValueError("Saldo insuficiente para transferência.")
 
         # ---------------------------
-        # Realizar transferência
+        # Reagistrar transferência
         # ---------------------------
-        transferencia = self.repository.realizar_transferencia(
+        saldo_origem = Decimal(saldo_origem) - valor_final
+        saldo_destino = Decimal(saldo_destino) + Decimal(valor)
+
+        transferencia = self.repository.registrar_transferencia(
             origem=endereco_origem,
             destino=endereco_destino,
             id_moeda=id_moeda,
             valor=valor,
             taxa_valor=taxa_valor,
-            chave_privada=chave_privada
+            saldo_origem=saldo_origem,
+            saldo_destino=saldo_destino
         )
 
         if not transferencia:
             raise ValueError("Erro ao registrar transferência.")
 
-        return transferencia
+        return {
+            "id_transferencia": transferencia,
+            "endereco_origem": endereco_origem,
+            "endereco_destino": endereco_destino,
+            "id_moeda": id_moeda,
+            "valor": valor,
+            "taxa_valor": float(taxa_valor),
+            "data_hora": datetime.utcnow().isoformat()
+        }

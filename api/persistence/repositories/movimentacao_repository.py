@@ -1,9 +1,12 @@
+from datetime import datetime
 from typing import List, Dict, Any
 from sqlalchemy import text
 from api.persistence.db import get_connection
 
 
 class MovimentacaoRepository:
+
+
 
     # ---------------- SALDOS ----------------
     def listar_saldos(self, endereco: str) -> List[Dict[str, Any]]:
@@ -78,6 +81,7 @@ class MovimentacaoRepository:
             result = conn.execute(query, {"codigo": codigo}).fetchone()
             return result[0] if result is not None else None
        
+       
 
         # ---------------- CONSULTA SALDO ATUAL ----------------
     def obter_saldo(self, endereco, id_moeda):
@@ -102,6 +106,7 @@ class MovimentacaoRepository:
         # ---------------- CONVERSÃO ----------------
     def registrar_conversao(self, endereco, c):
         with get_connection() as conn:
+            
             query = text("""
                 INSERT INTO conversao
                     (endereco_carteira, id_moeda_origem, id_moeda_destino, valor_origem,
@@ -124,35 +129,45 @@ class MovimentacaoRepository:
             return result.lastrowid
 
     # ========================================
-    # TRANSFERÊNCIA (NOVO)
+    # TRANSFERÊNCIA 
     # ========================================
-    def realizar_transferencia(self, origem, destino, id_moeda, valor, chave_privada):
-        cursor = self.conn.cursor(dictionary=True)
+    def registrar_transferencia(self, origem, destino, id_moeda, valor, taxa_valor, saldo_origem, saldo_destino):
+        with get_connection() as conn:
 
-        # Defina sua taxa do sistema:
-        taxa = float(valor) * 0.02  # 2%
-        
-        try:
-            cursor.callproc(
-                "sp_realizar_transferencia",
-                [origem, destino, id_moeda, valor, taxa, chave_privada]
-            )
+            conn.execute(
+                    text("""
+                    INSERT INTO saldo_carteira (endereco_carteira, id_moeda, saldo, data_atualizacao)
+                    VALUES (:endereco, :id_moeda, :saldo, NOW())
+                    ON DUPLICATE KEY UPDATE saldo = :saldo, data_atualizacao = NOW()
+                    """),
+                    {"endereco": origem, "id_moeda": id_moeda, "saldo": saldo_origem}
+                )
+            
+            conn.execute(
+                    text("""
+                    INSERT INTO saldo_carteira (endereco_carteira, id_moeda, saldo, data_atualizacao)
+                    VALUES (:endereco, :id_moeda, :saldo, NOW())
+                    ON DUPLICATE KEY UPDATE saldo = :saldo, data_atualizacao = NOW()
+                    """),
+                    {"endereco": destino, "id_moeda": id_moeda, "saldo": saldo_destino}
+                )
 
-            # Busca o recibo recém-criado
-            cursor.execute("""
-                SELECT *
-                FROM TRANSFERENCIA
-                WHERE endereco_origem = %s
-                  AND endereco_destino = %s
-                  AND id_moeda = %s
-                ORDER BY id_transferencia DESC
-                LIMIT 1
-            """, (origem, destino, id_moeda))
+            query = text("""
+                INSERT INTO transferencia
+                    (endereco_origem, endereco_destino, id_moeda, valor,
+                    taxa_valor, data_hora)
+                VALUES (:endereco_origem, :endereco_destino, :id_moeda, :valor,
+                        :taxa_valor, NOW())
+            """)
 
-            row = cursor.fetchone()
-            self.conn.commit()
-            return row
+            result = conn.execute(query, {
+                "endereco_origem": origem,
+                "endereco_destino": destino,
+                "id_moeda": id_moeda,
+                "valor": valor,
+                "taxa_valor": taxa_valor,
+            })
 
-        except Exception as e:
-            self.conn.rollback()
-            raise e
+            return result.lastrowid
+
+

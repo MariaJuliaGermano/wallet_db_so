@@ -80,6 +80,7 @@ class DepositoRequest(BaseModel):
 
 class SaqueRequest(BaseModel):
     valor: float
+    moeda: str |int
     chave_privada: str
 
 
@@ -87,11 +88,13 @@ class ConversaoRequest(BaseModel):
     moeda_origem: str = Field(..., description="Código da moeda de origem, ex: BTC")
     moeda_destino: str = Field(..., description="Código da moeda destino, ex: BRL")
     valor_origem: PositiveFloat = Field(..., description="Valor a debitar na moeda origem (positivo)")
+    chave_privada: str = Field(..., description="Chave privada da carteira")
 
 
 class TransferenciaRequest(BaseModel):
     endereco_destino: str
-    valor: float
+    id_moeda: str = Field(..., description="Código da moeda de origem, ex: BTC")
+    valor: PositiveFloat = Field(..., description="Valor a debitar na moeda origem (positivo)")
     chave_privada: str
 
 

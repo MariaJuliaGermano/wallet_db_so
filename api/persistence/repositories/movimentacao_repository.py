@@ -10,11 +10,11 @@ class MovimentacaoRepository:
         with get_connection() as conn:
             query = text("""
                 SELECT id_moeda,
-                       endereco_carteira,
-                       saldo,
-                       data_atualizacao
-                  FROM saldo_carteira
-                 WHERE endereco_carteira = :endereco
+                endereco_carteira,
+                saldo,
+                data_atualizacao
+                FROM saldo_carteira
+                WHERE endereco_carteira = :endereco
             """)
 
             result = conn.execute(query, {"endereco": endereco}).mappings().all()
@@ -66,6 +66,18 @@ class MovimentacaoRepository:
                 "id_moeda": id_moeda,
                 "valor_final": valor_final
             })
+            
+    def obter_id_moeda(self, codigo: str) -> Any:   
+        with get_connection() as conn:
+            query = text("""
+                SELECT id_moeda
+                FROM moeda
+                WHERE codigo = :codigo
+            """)
+
+            result = conn.execute(query, {"codigo": codigo}).fetchone()
+            return result[0] if result is not None else None
+       
 
         # ---------------- CONSULTA SALDO ATUAL ----------------
     def obter_saldo(self, endereco, id_moeda):
@@ -95,7 +107,7 @@ class MovimentacaoRepository:
                     (endereco_carteira, id_moeda_origem, id_moeda_destino, valor_origem,
                     valor_destino, taxa_percentual, taxa_valor, cotacao_utilizada, data_hora)
                 VALUES (:endereco, :origem, :destino, :valor_origem,
-                        :valor_destino, :taxa_percentual, :taxa_valor, :cotacao)
+                        :valor_destino, :taxa_percentual, :taxa_valor, :cotacao, NOW())
             """)
 
             result = conn.execute(query, {

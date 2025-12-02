@@ -146,7 +146,8 @@ class MovimentacaoService:
     # ========================
     #      CONVERSÃO
     # ========================
-    def converter(self, endereco: str, moeda_origem: str, moeda_destino: str, valor_origem: float):
+    def converter(self, endereco: str, moeda_origem: str, moeda_destino: str, valor_origem: float, chave_privada: str):
+        self._validar_credenciais(endereco, chave_privada)
         id_origem = self.repository.obter_id_moeda(moeda_origem)
         id_destino = self.repository.obter_id_moeda(moeda_destino)
         if id_origem is None or id_destino is None:
@@ -241,7 +242,8 @@ class MovimentacaoService:
 # ========================================
 # TRANSFERÊNCIA 
 # ========================================
-    def realizar_transferencia(self, endereco_origem, endereco_destino, id_moeda, valor, chave_privada=None):
+    def realizar_transferencia(self, endereco_origem, endereco_destino, id_moeda, valor, chave_privada):
+        self._validar_credenciais(endereco, chave_privada)
         id_moeda = self.repository.obter_id_moeda(id_moeda)
         # ---------------------------
         # Validações iniciais

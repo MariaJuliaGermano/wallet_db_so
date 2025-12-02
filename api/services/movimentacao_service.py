@@ -80,6 +80,23 @@ class MovimentacaoService:
 }
 
     # ========================
+    #     VALIDAÇÃO
+    # ========================
+    def _validar_credenciais(self, endereco, chave_privada):
+        """
+        Método interno para verificar se a senha confere.
+        Se não conferir, levanta um erro e interrompe o fluxo.
+        """
+        if not chave_privada:
+            raise ValueError("A chave privada (senha) é obrigatória.")
+
+        # Chama o repositório para checar no banco
+        senha_valida = self.repository.verificar_chave_privada(endereco, chave_privada)
+
+        if not senha_valida:
+            raise ValueError("Acesso negado: Chave privada incorreta.")
+
+    # ========================
     #      SAQUE
     # ========================
     def realizar_saque(self, endereco, id_moeda, valor, chave_privada): #add chave privada e add hash
@@ -91,7 +108,8 @@ class MovimentacaoService:
 #         if hash_salvo != hash_informado:
 #             raise ValueError("Chave privada inválida.")
 # ########################################################
-
+        self._validar_credenciais(endereco, chave_privada)
+        
         taxa_percentual = Decimal(os.getenv("TAXA_SAQUE_PERCENTUAL", "0.01"))
         taxa_valor = (Decimal(valor) * taxa_percentual).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
 

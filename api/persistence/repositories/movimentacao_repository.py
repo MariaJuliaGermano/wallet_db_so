@@ -1,4 +1,5 @@
 from datetime import datetime
+import hashlib
 from typing import List, Dict, Any
 from sqlalchemy import text
 from api.persistence.db import get_connection
@@ -127,6 +128,22 @@ class MovimentacaoRepository:
             })
 
             return result.lastrowid
+    # ========================================
+    #  VALIDAÇÃO CHAVE
+    # ========================================
+
+    def verificar_chave_privada(self, endereco, chave_input):
+        with get_connection() as conn: 
+            sql = text("""SELECT hash_chave_privada FROM CARTEIRA WHERE endereco_carteira = :endereco""")
+            resultado = conn.execute(sql, {"endereco": endereco}).fetchone()
+            
+
+        if not resultado:
+            return False
+            
+        hash_armazenado = resultado[0]
+        hash_input = hashlib.sha256(chave_input.encode()).hexdigest()
+        return hash_input == hash_armazenado
 
     # ========================================
     # TRANSFERÊNCIA 

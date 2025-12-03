@@ -52,3 +52,5 @@ def get_connection() -> Connection:
         raise
     finally:
         conn.close()
+
+        

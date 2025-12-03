@@ -35,17 +35,26 @@ class CarteiraRepository:
                 {"endereco": endereco, "hash_privada": hash_privada},
             )
 
+            conn.execute(
+                text("""
+                    INSERT INTO saldo_carteira (endereco_carteira, id_moeda, saldo, data_atualizacao)
+                    SELECT :endereco, id_moeda, 0.0, NOW()
+                    FROM moeda
+                """),
+                {"endereco": endereco},
+            )
+
             # 3) SELECT para retornar a carteira criada
             row = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
-                     WHERE endereco_carteira = :endereco
+                        data_criacao,
+                        status,
+                        hash_chave_privada
+                        FROM carteira
+                        WHERE endereco_carteira = :endereco
                 """),
-                {"endereco": endereco},
+                {"endereco": endereco}
             ).mappings().first()
 
         carteira = dict(row)
@@ -57,11 +66,11 @@ class CarteiraRepository:
             row = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
-                     WHERE endereco_carteira = :endereco
+                    data_criacao,
+                    status,
+                    hash_chave_privada
+                    FROM carteira
+                    WHERE endereco_carteira = :endereco
                 """),
                 {"endereco": endereco_carteira},
             ).mappings().first()
@@ -73,10 +82,10 @@ class CarteiraRepository:
             rows = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
+                    data_criacao,
+                    status,
+                    hash_chave_privada
+                    FROM carteira
                 """)
             ).mappings().all()
 
@@ -87,8 +96,8 @@ class CarteiraRepository:
             conn.execute(
                 text("""
                     UPDATE carteira
-                       SET status = :status
-                     WHERE endereco_carteira = :endereco
+                    SET status = :status
+                    WHERE endereco_carteira = :endereco
                 """),
                 {"status": status, "endereco": endereco_carteira},
             )
@@ -96,13 +105,15 @@ class CarteiraRepository:
             row = conn.execute(
                 text("""
                     SELECT endereco_carteira,
-                           data_criacao,
-                           status,
-                           hash_chave_privada
-                      FROM carteira
-                     WHERE endereco_carteira = :endereco
+                    data_criacao,
+                    status,
+                    hash_chave_privada
+                    FROM carteira
+                    WHERE endereco_carteira = :endereco
                 """),
                 {"endereco": endereco_carteira},
             ).mappings().first()
 
         return dict(row) if row else None
+    
+    

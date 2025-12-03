@@ -37,7 +37,7 @@ class MovimentacaoRepository:
             # Inserir movimentação
             conn.execute(
                 text("""
-                    INSERT INTO DEPOSITO_SAQUE
+                    INSERT INTO deposito_saque
                         (endereco_carteira, id_moeda, tipo, valor, taxa_valor, data_hora)
                     VALUES (:endereco, :id_moeda, :tipo, :valor, :taxa_valor, NOW())
                 """),
@@ -134,7 +134,7 @@ class MovimentacaoRepository:
 
     def verificar_chave_privada(self, endereco, chave_input):
         with get_connection() as conn: 
-            sql = text("""SELECT hash_chave_privada FROM CARTEIRA WHERE endereco_carteira = :endereco""")
+            sql = text("""SELECT hash_chave_privada FROM carteira WHERE endereco_carteira = :endereco""")
             resultado = conn.execute(sql, {"endereco": endereco}).fetchone()
             
 

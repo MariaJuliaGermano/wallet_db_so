@@ -23,7 +23,7 @@ services:
       start_period: 30s
 
   app:
-    image: mariajuliagermano/wallet-api:v1
+    image: mariajuliagermano/wallet-api:v2
     container_name: wallet_api
     
     environment:

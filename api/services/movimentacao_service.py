@@ -243,7 +243,7 @@ class MovimentacaoService:
 # TRANSFERÊNCIA 
 # ========================================
     def realizar_transferencia(self, endereco_origem, endereco_destino, id_moeda, valor, chave_privada):
-        self._validar_credenciais(endereco, chave_privada)
+        self._validar_credenciais(endereco_origem, chave_privada)
         id_moeda = self.repository.obter_id_moeda(id_moeda)
         # ---------------------------
         # Validações iniciais
@@ -256,6 +256,9 @@ class MovimentacaoService:
 
         if chave_privada is None:
             raise ValueError("Chave privada é obrigatória para transferência.")
+        
+        if endereco_origem == endereco_destino:
+            raise ValueError("Endereço de origem não pode ser igual ao endereço de destino.")
 
         # ---------------------------
         # Verificar saldo

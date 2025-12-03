@@ -8,8 +8,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: wallet_homolog
-      MYSQL_USER: wallet_api_homolog
-      MYSQL_PASSWORD: api123
       
     ports:
       - "3306:3306"

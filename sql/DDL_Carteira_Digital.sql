@@ -1,3 +1,27 @@
+-- =========================================================
+--  Script de criação da base, usuário,
+--  Projeto: Carteira Digital
+--  Banco:   MySQL 8+
+-- =========================================================
+
+-- 1) Criação da base de homologação
+CREATE DATABASE IF NOT EXISTS wallet_homolog
+    DEFAULT CHARACTER SET utf8mb4
+    DEFAULT COLLATE utf8mb4_0900_ai_ci;
+
+-- 2) Criação do usuário restrito para a API
+--    (ajuste a senha conforme necessário)
+CREATE USER IF NOT EXISTS 'wallet_api_homolog'@'%'
+    IDENTIFIED BY 'api123';
+
+-- 3) Grants: apenas DML (sem CREATE/DROP/ALTER)
+GRANT SELECT, INSERT, UPDATE, DELETE
+    ON wallet_homolog.*
+    TO 'wallet_api_homolog'@'%';
+
+FLUSH PRIVILEGES;
+
+
 USE wallet_homolog;
 
 -- ================================
@@ -23,9 +47,9 @@ CREATE TABLE IF NOT EXISTS moeda (
 
 INSERT INTO moeda (id_moeda, codigo, nome, tipo) VALUES 
 (1, 'BTC', 'Bitcoin', 'crypto'),
-(2, 'USD', 'US Dollar', 'currency'),
-(3, 'ETH', 'Etherium', 'crypto'),
-(4, 'BRL', 'Real brasileiro ', 'currency'),
+(2, 'USD', 'US Dollar', 'fiat'),
+(3, 'ETH', 'Ethereum', 'crypto'),
+(4, 'BRL', 'Real brasileiro ', 'fiat'),
 (5, 'SOL', 'Solana ', 'crypto');
 
 -- ===========================
